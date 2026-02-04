@@ -5,26 +5,21 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-def test_properties_search_functionality(driver):
-    """Verifies that a user can search for a specific referral record."""
+def test_properties_city_search(driver):
     wait = WebDriverWait(driver, 30)
-    search_query = "Rosewell"
+    search_query = "Roswell"
 
-    # 1. Login
     driver.get("https://opendoors--qa.sandbox.my.site.com/s/login/")
     wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input.input"))).send_keys("udeme@opendoorsatl.org.qa.casemanager")
     wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='password']"))).send_keys("14Gconnect#1")
     wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'loginButton')]"))).click()
     
-    assert wait.until(EC.url_contains("/s/")), "Login failed!"
+    wait.until(EC.url_contains("/s/"))
 
-    # 2. Navigate to Properties
     properties_tab = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(., 'Properties')]")))
     properties_tab.click()
     wait.until(EC.visibility_of_element_located((By.XPATH, "//span[contains(text(), 'All Live Properties')]")))
 
-    # 3. Locate Search Input via JavaScript (Shadow DOM handling)
-    # Using your existing robust script
     find_script = """
     function findInShadow(selector, root = document) {
         let el = root.querySelector(selector);
@@ -41,23 +36,31 @@ def test_properties_search_functionality(driver):
     return findInShadow('input[name="Property__c-search-input"]');
     """
     search_input = driver.execute_script(find_script)
-    
-    # Assert existence instead of if/else
-    assert search_input is not None, "Could not locate search box inside Shadow DOM"
+    assert search_input is not None, "Search box not found"
 
-    # 4. Perform Search
     search_input.click()
+    search_input.send_keys(Keys.COMMAND + "a")
+    search_input.send_keys(Keys.BACKSPACE)
     search_input.send_keys(search_query)
-    search_input.send_keys(Keys.ENTER)
+    
+    driver.execute_script("""
+        var input = arguments[0];
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        var ev = new KeyboardEvent('keydown', { 'keyCode': 13, 'which': 13, 'key': 'Enter', 'bubbles': true });
+        input.dispatchEvent(ev);
+    """, search_input)
 
-    # 5. Verification
-    # Wait for table to refresh - using a specific wait is better than time.sleep
-    result_xpath = f"//table//a[contains(text(), '{search_query}')]"
+    # Allow time for the 51 rows to be filtered out
+    time.sleep(5) 
+
+    # Targeted locator for the City column value based on your HTML
+    result_xpath = f"//td//span[contains(@class, 'uiOutputText') and @title='{search_query}']"
     
     try:
         target_record = wait.until(EC.presence_of_element_located((By.XPATH, result_xpath)))
-        assert search_query in target_record.text, f"Expected {search_query} but found {target_record.text}"
+        print(f"Success: Found {target_record.text} in the City column")
+        assert search_query in target_record.text
     except Exception:
-        # If it fails, we grab row count for the report
-        rows = driver.find_elements(By.XPATH, "//table//tr")
-        pytest.fail(f"Search failed. Visible table rows: {len(rows)}")
+        rows = driver.find_elements(By.XPATH, "//table//tbody/tr")
+        pytest.fail(f"Search failed. Record not found. Visible table rows: {len(rows)}")
