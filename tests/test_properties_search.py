@@ -5,10 +5,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-def test_referrals_search_functionality(driver):
+def test_properties_search_functionality(driver):
     """Verifies that a user can search for a specific referral record."""
     wait = WebDriverWait(driver, 30)
-    search_query = "Test Tester"
+    search_query = "Rosewell"
 
     # 1. Login
     driver.get("https://opendoors--qa.sandbox.my.site.com/s/login/")
@@ -18,10 +18,10 @@ def test_referrals_search_functionality(driver):
     
     assert wait.until(EC.url_contains("/s/")), "Login failed!"
 
-    # 2. Navigate to Referrals
-    referrals_tab = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(., 'Referrals & Campaign')]")))
-    referrals_tab.click()
-    wait.until(EC.visibility_of_element_located((By.XPATH, "//span[contains(text(), 'Recently Viewed')]")))
+    # 2. Navigate to Properties
+    properties_tab = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(., 'Properties')]")))
+    properties_tab.click()
+    wait.until(EC.visibility_of_element_located((By.XPATH, "//span[contains(text(), 'All Live Properties')]")))
 
     # 3. Locate Search Input via JavaScript (Shadow DOM handling)
     # Using your existing robust script
@@ -38,7 +38,7 @@ def test_referrals_search_functionality(driver):
         }
         return null;
     }
-    return findInShadow('input[name="Case-search-input"]');
+    return findInShadow('input[name="Property__c-search-input"]');
     """
     search_input = driver.execute_script(find_script)
     
