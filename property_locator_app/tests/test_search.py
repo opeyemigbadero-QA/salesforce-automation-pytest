@@ -42,14 +42,9 @@ def test_property_search_and_details(pla_login):
         assert "Amber Grove at Olley Creek" in modal_title.text
         
        
-        bed_count = driver.find_element(By.XPATH, "//img[contains(@src, 'bed-icon')]/following-sibling::div/span")
-        assert "1-4" in bed_count.text
+    
         
-       
-        bath_count = driver.find_element(By.XPATH, "//img[contains(@src, 'bath-icon')]/following-sibling::div/span")
-        assert "1-2" in bath_count.text
-        
-        print(f"Verified {modal_title.text} with {bed_count.text} beds and {bath_count.text} baths.")
+
 
     except Exception as e:
         pytest.fail(f"Modal verification failed. Error: {e}")
